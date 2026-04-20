@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kongsi — Fair bills, every time.</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:#050505;display:flex;justify-content:center;padding:24px 0;min-height:100vh}
+.app{max-width:420px;width:100%;min-height:620px;display:flex;flex-direction:column;background:#0a0a0a;border-radius:20px;overflow:hidden;border:0.5px solid rgba(255,255,255,0.07)}
+.hdr{background:rgba(255,255,255,0.02);border-bottom:0.5px solid rgba(255,255,255,0.06);padding:16px 20px 12px}
+.hdr-back{font-size:13px;color:#6b6b6b;cursor:pointer;margin-bottom:6px;display:inline-flex;align-items:center;gap:4px}
+.hdr-back:hover{color:#f97316}
+.hdr h2{font-size:20px;font-weight:600;color:#f0f0f0;letter-spacing:-0.025em}
+.hdr p{font-size:13px;color:#6b6b6b;margin-top:2px}
+.steps{display:flex;gap:5px;padding:12px 20px 8px;background:rgba(255,255,255,0.02)}
+.step{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,0.08)}
+.step.on{background:#f97316}
+.body{flex:1;padding:16px 20px;overflow-y:auto}
+.footer{padding:14px 20px;background:rgba(255,255,255,0.02);border-top:0.5px solid rgba(255,255,255,0.06)}
+.inp{width:100%;padding:11px 14px;border:0.5px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;background:rgba(255,255,255,0.05);color:#f0f0f0;outline:none;font-family:inherit}
+.inp:focus{border-color:#f97316;box-shadow:0 0 0 2.5px rgba(249,115,22,0.18)}
+.inp::placeholder{color:#3a3a3a}
+input[type=range]{accent-color:#f97316;width:100%}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+const genId=()=>Math.random().toString(36).substr(2,8);
+const fmt=n=>'RM '+(+n||0).toFixed(2);
+const DEF={sc:10,sst:8,scOn:true,sstOn:true};
+const AC='#f97316',ACL='#fb923c',ACG='rgba(249,115,22,0.22)',ACB='rgba(249,115,22,0.08)';
+const T1='#f0f0f0',T2='#6b6b6b',T3='#333333';
+const B1='rgba(255,255,255,0.06)',B2='rgba(255,255,255,0.11)';
+const CS=`background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px`;
+const BP=`width:100%;padding:15px;background:#ea6d0d;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:-0.01em;box-shadow:0 0 28px rgba(234,109,13,0.32),0 4px 14px rgba(234,109,13,0.18)`;
+const BD=`width:100%;padding:15px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.2);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:default;font-family:inherit`;
+const BG=`width:100%;padding:13px;background:transparent;border:0.5px solid rgba(255,255,255,0.11);border-radius:12px;font-size:14px;color:${T2};cursor:pointer;font-family:inherit`;
+const BR=`flex:1;padding:13px;background:rgba(180,40,40,0.3);color:#fca5a5;border:0.5px solid rgba(180,40,40,0.4);border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit`;
+const BK=`flex:1;padding:13px;background:transparent;border:0.5px solid rgba(255,255,255,0.11);border-radius:12px;font-size:14px;color:${T2};cursor:pointer;font-family:inherit`;
+
+const LOGO=`<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="18" fill="url(#grad)"/>
+  <rect x="18" y="10" width="28" height="36" rx="3" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <line x1="18" y1="28" x2="46" y2="28" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+  <line x1="23" y1="19" x2="37" y2="19" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="23" y1="23.5" x2="33" y2="23.5" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="23" y1="33" x2="30" y2="33" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="23" y1="37.5" x2="28" y2="37.5" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="34" y1="33" x2="41" y2="33" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="34" y1="37.5" x2="41" y2="37.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M32 46 L32 54" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M26 50 L32 54 L38 50" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="64" y2="64">
+      <stop offset="0%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+</svg>`;
+
+const IREC=`<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.35)" stroke-width="1.3" stroke-linecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 12h6M9 17h4"/></svg>`;
+const IWRN=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+
+function chip(label,sel,warn,fn){
+  const[bg,bd,cl,sh]=sel?['#ea6d0d',AC,'#fff',`box-shadow:0 0 10px ${ACG}`]:
+    warn?['rgba(245,158,11,0.1)','rgba(245,158,11,0.25)','#92400e','']:
+    ['rgba(255,255,255,0.06)','rgba(255,255,255,0.1)',T2,''];
+  return`<button onclick="${fn}" style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid ${bd};background:${bg};color:${cl};${sh};font-family:inherit">${label}</button>`;
+}
+function tgl(on,fn){
+  return`<button onclick="${fn}" style="width:46px;height:26px;border-radius:13px;position:relative;flex-shrink:0;border:none;padding:0;cursor:pointer;background:${on?AC:'rgba(255,255,255,0.13)'};${on?`box-shadow:0 0 10px ${ACG}`:''}"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.5);pointer-events:none;display:block;transform:translateX(${on?20:0}px)"></span></button>`;
+}
+function avi(l){return`<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#b45309,${ACL});display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;flex-shrink:0">${l.toUpperCase()}</div>`;}
+
+function calcBill(){
+  const{people,items,charges}=state;
+  const assigned=items.filter(i=>i.to?.length>0),unassigned=items.filter(i=>!i.to?.length);
+  const subs=Object.fromEntries(people.map(p=>[p.id,0]));
+  assigned.forEach(it=>{const s=it.price/it.to.length;it.to.forEach(pid=>{if(pid in subs)subs[pid]+=s;});});
+  const results={};
+  people.forEach(p=>{const sub=subs[p.id]||0,sc=charges.scOn?sub*charges.sc/100:0,sst=charges.sstOn?(sub+sc)*charges.sst/100:0;results[p.id]={sub,sc,sst,total:sub+sc+sst};});
+  return{results,unassigned,totalBill:Object.values(results).reduce((a,r)=>a+r.total,0)};
+}
+
+function save(){try{localStorage.setItem('kongsi-v3',JSON.stringify({...state,expandedPeople:{},confirmingUnassigned:false}));}catch(e){}}
+function setState(p,ns){Object.assign(state,typeof p==='function'?p(state):p);render();if(!ns)save();}
+function stepOn(s){return['people','items','charges','summary'].indexOf(s)<=(['people','items','charges','summary']).indexOf(state.screen);}
+function Steps(){return`<div class="steps">${['people','items','charges','summary'].map(s=>`<div class="step${stepOn(s)?' on':''}"></div>`).join('')}</div>`;}
+
+let state={screen:'home',people:[],items:[],charges:{...DEF},expandedPeople:{},confirmingUnassigned:false};
+
+function askReset(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.outerHTML=`<div style="display:flex;gap:8px;width:100%"><button onclick="doReset()" style="${BR}">Clear &amp; start fresh</button><button onclick="render()" style="${BK}">Keep session</button></div>`;
+}
+function doReset(){state={screen:'home',people:[],items:[],charges:{...DEF},expandedPeople:{},confirmingUnassigned:false};try{localStorage.removeItem('kongsi-v3');}catch(e){}render();}
+
+function HomeScreen(){
+  const{people,items}=state,has=people.length>0||items.length>0;
+  const resume=items.length>0?'items':people.length>0?'people':'people';
+  return`<div style="background:rgba(255,255,255,0.02);border-bottom:0.5px solid rgba(255,255,255,0.06);text-align:center;padding:36px 20px 32px">
+  ${LOGO}
+  <h1 style="font-size:28px;font-weight:700;color:${T1};letter-spacing:-0.04em;margin-top:16px">Kongsi</h1>
+  <p style="font-size:14px;color:${T2};margin-top:6px">Fair bills, every time.</p>
+</div>
+<div class="body" style="display:flex;flex-direction:column;justify-content:center;gap:10px;padding-top:28px">
+${has?`<div style="${CS}">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+    <div style="width:8px;height:8px;border-radius:50%;background:#f97316;box-shadow:0 0 8px rgba(249,115,22,0.6)"></div>
+    <span style="font-weight:600;font-size:14px;color:${T1}">Session in progress</span>
+  </div>
+  <p style="font-size:13px;color:${T2};margin-bottom:16px;padding-left:18px">${people.length} people · ${items.length} item${items.length!==1?'s':''}</p>
+  <button onclick="setState({screen:'${resume}'})" style="${BP};margin-bottom:10px">Continue</button>
+  <button id="rh" onclick="askReset('rh')" style="${BG}">Start new session</button>
+</div>`:`<button onclick="setState({screen:'people'})" style="${BP}">Start calculating →</button>`}
+</div>`;
+}
+
+function PeopleScreen(){
+  const{people}=state;
+  return`<div class="hdr"><span class="hdr-back" onclick="setState({screen:'home'})">← Back</span><h2>Who's joining?</h2><p>Add everyone at the table</p></div>
+${Steps()}
+<div class="body">
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <input class="inp" id="pi" placeholder="Name..." onkeydown="if(event.key==='Enter')addPerson()" style="flex:1"/>
+    <button onclick="addPerson()" style="padding:10px 16px;background:#ea6d0d;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 0 14px ${ACG}">Add</button>
+  </div>
+  ${people.map(p=>`<div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.03);border:0.5px solid ${B1};border-radius:12px;padding:11px 14px;margin-bottom:8px">
+    ${avi(p.name[0])}<span style="flex:1;font-size:14px;color:${T1}">${p.name}</span>
+    <button onclick="removePerson('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:20px;color:${T3};line-height:1;padding:0 2px">×</button>
+  </div>`).join('')}
+  ${people.length===0?`<div style="text-align:center;padding:40px 20px;color:${T3}">${IREC}<p style="font-size:14px;margin-top:12px">No one added yet</p></div>`:''}
+</div>
+<div class="footer"><button ${people.length===0?`style="${BD}"`:`onclick="setState({screen:'items'})" style="${BP}"`}>Next — Add items</button></div>`;
+}
+
+function ItemCard(it,people){
+  const isW=!it.to?.length,allOn=people.length>0&&people.every(p=>it.to?.includes(p.id));
+  const nc=isW?'#f59e0b':T1,pc=isW?'#d97706':T1,xc=isW?'rgba(245,158,11,0.45)':T3;
+  return`<div style="background:${isW?'rgba(245,158,11,0.05)':'rgba(255,255,255,0.04)'};border:0.5px solid ${isW?'rgba(245,158,11,0.2)':B1};border-radius:12px;padding:12px 14px;margin-bottom:8px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <span style="flex:1;font-size:14px;font-weight:500;color:${nc};cursor:pointer" ondblclick="editItemName('${it.id}')" title="Double-click to edit">${it.name}</span>
+    <span style="font-size:14px;font-weight:600;color:${pc};cursor:pointer;white-space:nowrap" ondblclick="editItemPrice('${it.id}')" title="Double-click to edit">${fmt(it.price)}</span>
+    <button onclick="removeItem('${it.id}')" style="background:none;border:none;cursor:pointer;font-size:18px;color:${xc};line-height:1;padding:0 2px">×</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:5px">
+    ${people.length>1?chip('All',allOn,isW&&!allOn,`toggleAll('${it.id}')`):''}
+    ${people.map(p=>{const on=it.to?.includes(p.id)||false;return chip(p.name,on,isW&&!on,`togglePerson('${it.id}','${p.id}')`);}).join('')}
+  </div>
+  ${isW?`<p style="font-size:11px;color:rgba(245,158,11,0.55);margin-top:8px">Tap a name to assign this item</p>`:''}
+</div>`;
+}
+
+function ItemsScreen(){
+  const{people,items}=state,un=items.filter(i=>!i.to?.length);
+  const footer=state.confirmingUnassigned?`
+<div style="background:rgba(245,158,11,0.07);border:0.5px solid rgba(245,158,11,0.2);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px">
+  ${IWRN}<div><p style="font-size:13px;font-weight:600;color:#f59e0b">${un.length} item${un.length>1?'s':''} unassigned</p><p style="font-size:12px;color:#d97706;margin-top:2px">These won't be counted. Continue anyway?</p></div>
+</div>
+<div style="display:flex;gap:8px">
+  <button onclick="setState({confirmingUnassigned:false},true)" style="${BG};flex:1;padding:12px">Go back</button>
+  <button onclick="setState({screen:'charges',confirmingUnassigned:false})" style="flex:1;padding:12px;background:#ea6d0d;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 0 18px ${ACG}">Continue anyway</button>
+</div>`:items.length===0?`<button style="${BD}">Next — Charges</button>`:`<button onclick="tryProceed()" style="${BP}">Next — Charges</button>`;
+  return`<div class="hdr"><span class="hdr-back" onclick="setState({screen:'people',confirmingUnassigned:false})">← Back</span><h2>Items & assignment</h2><p>Tap names to assign each item</p></div>
+${Steps()}
+<div class="body">
+  ${items.map(it=>ItemCard(it,people)).join('')}
+  <div id="add-form-area"><button onclick="showAddForm()" style="${BG};border-style:dashed;margin-top:4px">+ Add item</button></div>
+  ${items.length===0?`<div style="text-align:center;padding:40px 20px;color:${T3}">${IREC}<p style="font-size:14px;margin-top:12px">No items yet</p></div>`:''}
+</div>
+<div class="footer">${footer}</div>`;
+}
+
+function ChargeRow(key,label,hint,min,max){
+  const on=state.charges[key+'On'],val=state.charges[key];
+  return`<div style="${CS};margin-bottom:10px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${on?'14px':'0'}">
+    <div><p style="font-weight:600;font-size:14px;color:${T1}">${label}</p><p style="font-size:12px;color:${T2};margin-top:2px">${hint}</p></div>
+    ${tgl(on,`toggleCharge('${key}On')`)}
+  </div>
+  ${on?`<div style="display:flex;align-items:center;gap:8px">
+    <input type="range" min="${min}" max="${max}" step="0.5" value="${val}" oninput="setCharge('${key}',+this.value)" style="flex:1"/>
+    <button onclick="adjCharge('${key}',-0.5,${min},${max})" style="width:28px;height:28px;border:0.5px solid ${B2};border-radius:6px;background:rgba(255,255,255,0.04);color:${T1};cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit">−</button>
+    <span style="min-width:42px;text-align:center;font-size:14px;font-weight:600;color:${T1}">${val}%</span>
+    <button onclick="adjCharge('${key}',0.5,${min},${max})" style="width:28px;height:28px;border:0.5px solid ${B2};border-radius:6px;background:rgba(255,255,255,0.04);color:${T1};cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit">+</button>
+  </div>`:``}
+</div>`;
+}
+
+function ChargesScreen(){
+  const{charges,items}=state;
+  const sub=items.filter(i=>i.to?.length>0).reduce((a,i)=>a+(+i.price||0),0);
+  const sc=charges.scOn?sub*charges.sc/100:0,sst=charges.sstOn?(sub+sc)*charges.sst/100:0;
+  return`<div class="hdr"><span class="hdr-back" onclick="setState({screen:'items'})">← Back</span><h2>Taxes & charges</h2><p>As shown on your receipt</p></div>
+${Steps()}
+<div class="body">
+  ${ChargeRow('sc','Service charge','Common at restaurants (10%)',0,20)}
+  ${ChargeRow('sst','SST','Sales & Services Tax (6–8%)',0,15)}
+  <div style="background:${ACB};border:0.5px solid rgba(249,115,22,0.15);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#fb923c;line-height:1.6">SST is calculated on subtotal + service charge, matching Malaysian receipt standards. Charges distributed proportionally per person.</div>
+  <div style="${CS}">
+    <p style="font-size:12px;font-weight:600;color:${T2};letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px">Preview</p>
+    <div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;color:${T2}"><span>Food subtotal</span><span>${fmt(sub)}</span></div>
+    ${charges.scOn?`<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;color:${T2}"><span>Service charge (${charges.sc}%)</span><span>${fmt(sc)}</span></div>`:''}
+    ${charges.sstOn?`<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;color:${T2}"><span>SST (${charges.sst}%)</span><span>${fmt(sst)}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:700;padding-top:12px;margin-top:6px;border-top:0.5px solid ${B1};letter-spacing:-0.02em"><span style="color:${T1}">Grand total</span><span style="color:${AC}">${fmt(sub+sc+sst)}</span></div>
+  </div>
+</div>
+<div class="footer"><button onclick="setState({screen:'summary'})" style="${BP}">See summary</button></div>`;
+}
+
+function SummaryScreen(){
+  const{people,items,charges,expandedPeople}=state;
+  const{results,unassigned,totalBill}=calcBill();
+  return`<div class="hdr"><span class="hdr-back" onclick="setState({screen:'charges'})">← Back</span><h2>Bill summary</h2><p>Grand total — <span style="color:${AC};font-weight:600">${fmt(totalBill)}</span></p></div>
+${Steps()}
+<div class="body">
+${people.map(p=>{
+  const r=results[p.id],pi=items.filter(i=>i.to?.includes(p.id)),open=expandedPeople[p.id];
+  return`<div style="background:rgba(255,255,255,0.04);border:0.5px solid ${B1};border-radius:14px;overflow:hidden;margin-bottom:8px">
+  <div onclick="toggleExpand('${p.id}')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer">
+    ${avi(p.name[0])}
+    <div style="flex:1"><p style="font-size:14px;font-weight:600;color:${T1}">${p.name}</p><p style="font-size:12px;color:${T2};margin-top:1px">${pi.length} item${pi.length!==1?'s':''} · ${open?'tap to collapse':'tap to expand'}</p></div>
+    <span style="font-size:18px;font-weight:700;color:${AC};letter-spacing:-0.02em">${fmt(r.total)}</span>
+    <span style="color:${T3};font-size:10px;margin-left:6px">${open?'▲':'▼'}</span>
+  </div>
+  ${open?`<div style="padding:10px 16px 14px;border-top:0.5px solid ${B1}">
+    ${pi.map(it=>{const sh=it.price/it.to.length;return`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:${T2}"><span>${it.name}${it.to.length>1?` <span style="font-size:11px;color:${T3}">÷${it.to.length}</span>`:''}</span><span>${fmt(sh)}</span></div>`;}).join('')}
+    <div style="border-top:0.5px solid ${B1};margin-top:10px;padding-top:10px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:${T2}"><span>Subtotal</span><span>${fmt(r.sub)}</span></div>
+      ${charges.scOn?`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:${T2}"><span>Service charge</span><span>${fmt(r.sc)}</span></div>`:''}
+      ${charges.sstOn?`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:${T2}"><span>SST</span><span>${fmt(r.sst)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:600;padding-top:8px;margin-top:4px;border-top:0.5px solid ${B1}"><span style="color:${T1}">Total</span><span style="color:${AC}">${fmt(r.total)}</span></div>
+    </div>
+  </div>`:''}
+</div>`;}).join('')}
+${unassigned.length>0?`<div style="background:rgba(245,158,11,0.05);border:0.5px solid rgba(245,158,11,0.18);border-radius:14px;padding:14px 16px;margin-bottom:8px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">${IWRN}<p style="font-size:13px;font-weight:600;color:#f59e0b">Unassigned items — excluded</p></div>
+  ${unassigned.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;color:#d97706;padding:3px 0"><span>${i.name}</span><span>${fmt(i.price)}</span></div>`).join('')}
+  <button onclick="setState({screen:'items'})" style="margin-top:10px;font-size:12px;color:rgba(245,158,11,0.6);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit">← Go back to assign</button>
+</div>`:''}
+</div>
+<div class="footer" style="display:flex;flex-direction:column;gap:8px">
+  <button onclick="shareSummary()" id="share-btn" style="${BP}">Share / copy summary</button>
+  <button id="rs" onclick="askReset('rs')" style="${BG}">Start new session</button>
+</div>`;
+}
+
+function render(){
+  const s=state.screen;
+  document.getElementById('app').innerHTML=s==='home'?HomeScreen():s==='people'?PeopleScreen():s==='items'?ItemsScreen():s==='charges'?ChargesScreen():SummaryScreen();
+  if(s==='people')setTimeout(()=>document.getElementById('pi')?.focus(),50);
+}
+function tryProceed(){const un=state.items.filter(i=>!i.to?.length);if(!un.length)setState({screen:'charges'});else setState({confirmingUnassigned:true},true);}
+function addPerson(){const inp=document.getElementById('pi'),name=(inp?.value||'').trim();if(!name)return;setState(s=>({people:[...s.people,{id:genId(),name}],confirmingUnassigned:false}));setTimeout(()=>{const i=document.getElementById('pi');if(i){i.value='';i.focus();}},10);}
+function removePerson(id){setState(s=>({people:s.people.filter(p=>p.id!==id),items:s.items.map(i=>({...i,to:(i.to||[]).filter(p=>p!==id)})),confirmingUnassigned:false}));}
+function togglePerson(iid,pid){setState(s=>({items:s.items.map(i=>{if(i.id!==iid)return i;const to=i.to||[];return{...i,to:to.includes(pid)?to.filter(p=>p!==pid):[...to,pid]};}),confirmingUnassigned:false}));}
+function toggleAll(iid){const{people,items}=state,it=items.find(i=>i.id===iid),allOn=people.every(p=>it.to?.includes(p.id));setState(s=>({items:s.items.map(i=>i.id===iid?{...i,to:allOn?[]:people.map(p=>p.id)}:i),confirmingUnassigned:false}));}
+function removeItem(id){setState(s=>({items:s.items.filter(i=>i.id!==id),confirmingUnassigned:false}));}
+function editItemName(id){const it=state.items.find(i=>i.id===id),n=prompt('Edit item name:',it.name);if(n?.trim())setState(s=>({items:s.items.map(i=>i.id===id?{...i,name:n.trim()}:i)}));}
+function editItemPrice(id){const it=state.items.find(i=>i.id===id),v=prompt('Edit price (RM):',it.price),p=parseFloat(v);if(!isNaN(p)&&p>=0)setState(s=>({items:s.items.map(i=>i.id===id?{...i,price:p}:i)}));}
+function showAddForm(){
+  const a=document.getElementById('add-form-area');if(!a)return;
+  a.innerHTML=`<div style="background:rgba(255,255,255,0.04);border:0.5px solid ${AC};border-radius:12px;padding:14px;margin-top:4px">
+  <input class="inp" id="nn" placeholder="Item name" style="margin-bottom:8px" onkeydown="if(event.key==='Enter')document.getElementById('np').focus()"/>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:13px;color:${T2};white-space:nowrap">RM</span><input class="inp" id="np" type="number" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter')subAdd()"/></div>
+  <div style="display:flex;gap:8px">
+    <button onclick="subAdd()" style="flex:1;padding:10px;background:#ea6d0d;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 0 12px ${ACG}">Add item</button>
+    <button onclick="render()" style="padding:10px 16px;border:0.5px solid ${B2};border-radius:10px;background:none;font-size:13px;color:${T2};cursor:pointer;font-family:inherit">Cancel</button>
+  </div></div>`;
+  setTimeout(()=>document.getElementById('nn')?.focus(),50);
+}
+function subAdd(){const n=(document.getElementById('nn')?.value||'').trim(),p=parseFloat(document.getElementById('np')?.value||'');if(!n||isNaN(p))return;setState(s=>({items:[...s.items,{id:genId(),name:n,price:p,to:[]}]}));}
+function toggleCharge(key){setState(s=>({charges:{...s.charges,[key]:!s.charges[key]}}));}
+function setCharge(key,val){state.charges[key]=val;render();save();}
+function adjCharge(key,d,min,max){state.charges[key]=Math.min(max,Math.max(min,Math.round((state.charges[key]+d)*10)/10));render();save();}
+function toggleExpand(pid){setState(s=>({expandedPeople:{...s.expandedPeople,[pid]:!s.expandedPeople[pid]}}));}
+
+function shareSummary(){
+  const{people,items,charges}=state;
+  const{results,unassigned,totalBill}=calcBill();
+  const date=new Date().toLocaleDateString('en-MY',{day:'numeric',month:'short',year:'numeric'});
+  const sep='─────────────────────';
+  const lines=[`Kongsi — ${date}`,sep,''];
+  people.forEach(p=>{
+    const r=results[p.id],pi=items.filter(i=>i.to?.includes(p.id));
+    lines.push(`${p.name}`);
+    pi.forEach(it=>{
+      const share=it.price/it.to.length;
+      const suffix=it.to.length>1?` (shared ÷${it.to.length})`:'';
+      lines.push(`  ${it.name}${suffix}   ${fmt(share)}`);
+    });
+    if(charges.scOn)lines.push(`  Service charge   ${fmt(r.sc)}`);
+    if(charges.sstOn)lines.push(`  SST   ${fmt(r.sst)}`);
+    lines.push(`  Total: ${fmt(r.total)}`,'');
+  });
+  lines.push(sep,`Grand total: ${fmt(totalBill)}`);
+  if(unassigned.length)lines.push('',`⚠ ${unassigned.length} item(s) unassigned — not included`);
+  const text=lines.join('\n');
+  if(navigator.share)navigator.share({title:'Kongsi',text});
+  else navigator.clipboard.writeText(text).then(()=>{const b=document.getElementById('share-btn');if(b){const o=b.textContent;b.textContent='Copied!';setTimeout(()=>b.textContent=o,2000);}}).catch(()=>alert(text));
+}
+
+(()=>{
+  try{const raw=localStorage.getItem('kongsi-v3');if(raw){const d=JSON.parse(raw);if(d.people)state.people=d.people;if(d.items)state.items=d.items;if(d.charges)state.charges={...DEF,...d.charges};if(d.screen)state.screen=d.screen;}}catch(e){}
+  render();
+})();
+</script>
+</body>
+</html>
