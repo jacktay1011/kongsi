@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#f97316"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Kongsi"/>
+<link rel="manifest" href="/manifest.json"/>
 <title>Kongsi — Fair bills, every time.</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -306,6 +312,13 @@ function shareSummary(){
   try{const raw=localStorage.getItem('kongsi-v3');if(raw){const d=JSON.parse(raw);if(d.people)state.people=d.people;if(d.items)state.items=d.items;if(d.charges)state.charges={...DEF,...d.charges};if(d.screen)state.screen=d.screen;}}catch(e){}
   render();
 })();
+</script>
+  <script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
 </script>
 </body>
 </html>
